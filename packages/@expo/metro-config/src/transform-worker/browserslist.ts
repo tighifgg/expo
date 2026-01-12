@@ -6,6 +6,11 @@ const debug = require('debug')('expo:metro:browserslist') as typeof console.log;
 
 const browserslistCache: Record<string, import('lightningcss').Targets> = {};
 
+// Suppress `browserslist`'s own "data is X months old" warning in transform workers.
+// The warning is shown once from the main Metro config initialization instead.
+// @see packages/@expo/metro-config/src/ExpoMetroConfig.ts
+process.env.BROWSERSLIST_IGNORE_OLD_DATA = '1';
+
 export async function getBrowserslistTargets(
   projectRoot: string
 ): Promise<import('lightningcss').Targets> {

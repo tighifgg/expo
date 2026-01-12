@@ -30,6 +30,22 @@ const setOnReadonly_1 = require("./utils/setOnReadonly");
 const debug = require('debug')('expo:metro:config');
 let hasWarnedAboutExotic = false;
 let hasWarnedAboutReactNative = false;
+let hasCheckedBrowserslist = false;
+/**
+ * Call `browserslist` once in the main process to trigger its native "data is X months old" warning. Workers suppress
+ * this warning via `BROWSERSLIST_IGNORE_OLD_DATA` environment variable.
+ */
+function checkBrowserslistData() {
+    if (hasCheckedBrowserslist)
+        return;
+    hasCheckedBrowserslist = true;
+    try {
+        require('browserslist')();
+    }
+    catch {
+        // Silently ignore if `browserslist` is not available
+    }
+}
 // Patch Metro's graph to support always parsing certain modules. This enables
 // things like Tailwind CSS which update based on their own heuristics.
 function patchMetroGraphToSupportUncachedModules() {
@@ -130,6 +146,7 @@ function getDefaultConfig(projectRoot, { mode, isCSSEnabled = true, unstable_bef
     const { getDefaultConfig: getDefaultMetroConfig, mergeConfig, } = require('@expo/metro/metro-config');
     if (isCSSEnabled) {
         patchMetroGraphToSupportUncachedModules();
+        checkBrowserslistData();
     }
     const isExotic = mode === 'exotic' || env_1.env.EXPO_USE_EXOTIC;
     if (isExotic && !hasWarnedAboutExotic) {
